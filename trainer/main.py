@@ -4,7 +4,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torch.onnx
 import json, random
-from model import SimpleCNN
+from model import MalwareModel
+import time
 
 def load_dataset():
     with open('db.json', 'rb') as f:
@@ -22,7 +23,7 @@ dataset = load_dataset()
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
 embedding_dim = 256  # Replace with the desired embedding dimension
-model = SimpleCNN()
+model = MalwareModel(max_byte_size, embedding_dim)
 
 # Define hyperparameters
 learning_rate = 0.001
@@ -37,14 +38,8 @@ for epoch in range(num_epochs):
     
     for i in range(10):
         x, y = get_batch(dataset)
-        batch_size = x.size(0)
-        channels = 3  # Assuming RGB images
-        height = 32
-        width = 32
-        reshaped_input = x.view(batch_size, channels, height, width)
-        
         optimizer.zero_grad()
-        outputs = model(reshaped_input.float())
+        outputs = model(x)
         loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
@@ -60,8 +55,37 @@ print("Training finished!")
 model.eval()  # Set the model to evaluation mode
 
 torch.save(model.state_dict(), 'model.pt')
-sample_input = torch.randint(0, max_byte_size, (1, 100))
 
-traced_model = torch.jit.trace(model, sample_input)
-torch.onnx.export(traced_model, sample_input, "MalwareModel.onnx", verbose=False, dynamic_axes={'input': {0: 'batch_size', 1: 'sequence_length'}})
-print("Model exported to ONNX successfully.")
+input_data = torch.LongTensor(1, 128).random_(0, max_byte_size)
+
+# Export the embedding layer to ONNX format
+torch.onnx.export(
+    model,          # Model to export
+    input_data,               # Sample input data
+    "embedding_layer.onnx",   # File name to save the ONNX model
+    verbose=False,
+    input_names=["input"],    # Names for the input tensors
+    output_names=["output"],  # Names for the output tensors
+    dynamic_axes={
+        "input": {0: "batch_size", 1: "sequence_length"},
+        "output": {0: "batch_size", 1: "sequence_length"}
+    }
+)
+
+print('Running inference.')
+
+start_t = time.time()
+
+data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+input_data = torch.tensor(data)
+input_data = input_data.unsqueeze(0)
+print(input_data.shape)
+
+out = model(input_data)
+print(out)
+
+end_t = time.time()
+print(end_t-start_t)
+
+# Python: 0.0008323
+# Rust:   0.00008449

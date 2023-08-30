@@ -19,26 +19,3 @@ class MalwareModel(nn.Module):
         x = nn.functional.relu(self.fc3(x))
         x = self.fc4(x)
         return x
-
-class SimpleCNN(nn.Module):
-    def __init__(self):
-        super(SimpleCNN, self).__init__()
-        
-        # Convolutional layers
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
-        
-        # Fully connected layers
-        self.fc1 = nn.Linear(32 * 16 * 16, 128)  # Assuming input image size is 32x32
-        self.fc2 = nn.Linear(128, 10)  # 10 classes for classification
-        
-    def forward(self, x):
-        x = nn.functional.relu(self.conv1(x))
-        x = nn.functional.max_pool2d(x, 2)
-        x = nn.functional.relu(self.conv2(x))
-        x = nn.functional.max_pool2d(x, 2)
-        
-        x = x.view(x.size(0), -1)  # Flatten the tensor for fully connected layers
-        x = nn.functional.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
