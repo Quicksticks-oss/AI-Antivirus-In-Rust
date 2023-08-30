@@ -15,11 +15,24 @@ class FileClassifier(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x, hidden=None):
-        x = self.linear(x)  # Using linear layer instead of embedding
-        x, (hn, cn) = self.lstm(x, hidden) if hidden is not None else self.lstm(x)
-        x = self.fc(x)  # Using the last hidden state for classification
-        x = self.softmax(x)
-        return x, (hn, cn)
+        x = self.linear(x)
+        
+        batch_size, seq_length, _ = x.size()
+        
+        if hidden is None:
+            # Initialize the hidden state
+            hidden = (torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device),
+                      torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device))
+        
+        # Initialize the output tensor
+        outputs = torch.zeros(batch_size, seq_length, self.num_classes).to(x.device)
+        
+        for t in range(seq_length):
+            x_t, hidden = self.lstm(x[:, t, :].unsqueeze(1), hidden)  # Process one timestep at a time
+            x_t = self.fc(x_t)
+            outputs[:, t, :] = self.softmax(x_t)
+        
+        return outputs, hidden
 
 # Define a basic dataset class to load and preprocess the data
 class FileDataset(data.Dataset):
@@ -35,12 +48,25 @@ class FileDataset(data.Dataset):
         label = self.labels[index]
         return file_bytes, label
 
-def split_tensor_into_chunks(tensor, chunk_size, dim):
-    chunks = tensor.chunk(tensor.size(dim) // chunk_size, dim=dim)
-    return chunks
+def split_tensor_into_chunks(tensor, chunk_size):
+    batch_size, seq_length = tensor.shape
+    num_chunks = (seq_length + chunk_size - 1) // chunk_size
+
+    # Calculate the padding size for the last chunk
+    padding_size = chunk_size - (seq_length % chunk_size)
+    
+    # Pad the tensor if needed
+    if padding_size > 0:
+        padding = torch.zeros(batch_size, padding_size, dtype=tensor.dtype, device=tensor.device)
+        tensor = torch.cat((tensor, padding), dim=1)
+    
+    # Reshape the tensor into chunks
+    tensor = tensor.view(batch_size, num_chunks, chunk_size)
+    
+    return tensor
 
 # Dummy data
-file_bytes_list = [np.random.randint(0, 256, size=(1024*4,)) for _ in range(10)]  # Replace with actual file bytes
+file_bytes_list = [np.random.randint(0, 256, size=(466)) for _ in range(10)]  # Replace with actual file bytes
 labels = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]  # Replace with corresponding labels
 
 # Hyperparameters
@@ -48,9 +74,9 @@ input_size = 256  # Assuming bytes are in the range 0-255
 hidden_size = 128
 num_layers = 4
 num_classes = len(set(labels))
-batch_size = 128
-learning_rate = 0.001
-num_epochs = 150
+batch_size = 5
+learning_rate = 0.01
+num_epochs = 1500
 
 # Create instances of the dataset and data loader
 dataset = FileDataset(file_bytes_list, labels)
@@ -65,11 +91,22 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 for epoch in range(num_epochs):
     for file_bytes, label in data_loader:
         optimizer.zero_grad()
-        file_bytes = torch.tensor(file_bytes, dtype=torch.long).float()  # Convert to LongTensor for embedding
-        bytes_ = split_tensor_into_chunks(file_bytes, input_size, 1)
-        outputs, hid = model(bytes_[0])
-        for b in range(1, len(bytes_)):
-            outputs, hid = model(bytes_[b], hid)
+        file_bytes = torch.tensor(file_bytes, dtype=torch.long).float()
+        bytes_ = split_tensor_into_chunks(file_bytes, input_size)
+        
+        batch_size = file_bytes.size(0)
+        
+        # Initialize hidden state for each batch and each layer
+        hidden = (torch.zeros(num_layers, batch_size, hidden_size),
+                  torch.zeros(num_layers, batch_size, hidden_size))
+        
+        # Process each chunk
+        for byte_chunk in bytes_:
+            # Move the hidden state to the same device as the input data
+            hidden = (hidden[0].to(file_bytes.device), hidden[1].to(file_bytes.device))
+            
+            outputs, hidden = model(byte_chunk, hidden)
+            
         loss = criterion(outputs, label)
         loss.backward()
         optimizer.step()
