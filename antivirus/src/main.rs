@@ -32,6 +32,8 @@ fn main() -> OrtResult<()> {
     let numpy_array = CowArray::from(Array::from(int_array));
     let farray = numpy_array.clone().insert_axis(Axis(0)).into_shape((1, 10)).unwrap().into_dyn();
 
+    println!("{}", farray);
+
     let inputs = vec![Value::from_array(session.allocator(), &farray)?];
     let outputs: Vec<Value> = session.run(inputs)?;
     let generated_tokens: OrtOwnedTensor<f32, _> = outputs[0].try_extract()?;
