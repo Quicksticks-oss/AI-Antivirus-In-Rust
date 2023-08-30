@@ -26,31 +26,22 @@ def load_dataset():
     with open('db.json', 'rb') as f:
         return json.load(f)
 
-def get_batch(dataset, batch_size):
-    ix = 0#random.randint(0, len(dataset['malware'])-batch_size)
-    print(ix)
-    batch_data = dataset['malware'][ix:ix+batch_size]
-    data_at_index_2 = [item[2] for item in batch_data]
-    print(len(data_at_index_2))
-    #return mw
+def get_batch(dataset):
+    index = random.choice(['malware', 'safe'])
+    ix = random.randint(0, len(dataset[index])-1)
+    batch_data = dataset[index][ix][-1]
+    y_output = torch.tensor([1.0, 0.0]) if index == 'malware' else torch.tensor([0.0, 1.0])
+    return torch.tensor([batch_data]), y_output.unsqueeze(0)
 
 dataset = load_dataset()
 
-batch_x = get_batch(dataset, 6)
-print(batch_x.shape)
-
-#bytes_ = dataset['malware'][0][2]
-#
 ## Instantiate the model
-#vocab_size = 256  # Replace with the actual vocabulary size
-#embedding_dim = 256  # Replace with the desired embedding dimension
-#model = CustomModel(vocab_size, embedding_dim)
-#
-## Generate a random input
-#input_data = torch.tensor([bytes_])
-#
-### Get the model's prediction
-#output = model(input_data)
-#print(output)
-#print(output.shape)  # This should print torch.Size([1, 2])
-#
+vocab_size = 256  # Replace with the actual vocabulary size
+embedding_dim = 256  # Replace with the desired embedding dimension
+model = CustomModel(vocab_size, embedding_dim)
+
+x, y = get_batch(dataset)
+
+output = model(x)
+print(output)
+print(output.shape)  # This should print torch.Size([1, 2])
