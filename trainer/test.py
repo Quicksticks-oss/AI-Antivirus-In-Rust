@@ -16,8 +16,8 @@ class FileClassifier(nn.Module):
 
     def forward(self, x, hidden=None):
         x = self.linear(x)  # Using linear layer instead of embedding
-        out, (hn, cn) = self.lstm(x, hidden) if hidden is not None else self.lstm(x)
-        x = self.fc(out[:, -1, :])  # Using the last hidden state for classification
+        x, (hn, cn) = self.lstm(x, hidden) if hidden is not None else self.lstm(x)
+        x = self.fc(x)  # Using the last hidden state for classification
         x = self.softmax(x)
         return x, (hn, cn)
 
@@ -35,8 +35,8 @@ class FileDataset(data.Dataset):
         label = self.labels[index]
         return file_bytes, label
 
-def split_tensor_into_chunks(tensor, input_size, dim=0):
-    chunks = tensor.chunk(tensor.size(dim) // input_size, dim=dim)
+def split_tensor_into_chunks(tensor, chunk_size, dim):
+    chunks = tensor.chunk(tensor.size(dim) // chunk_size, dim=dim)
     return chunks
 
 # Dummy data
@@ -65,11 +65,11 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 for epoch in range(num_epochs):
     for file_bytes, label in data_loader:
         optimizer.zero_grad()
-        file_bytes = torch.tensor(file_bytes, dtype=torch.long)  # Convert to LongTensor for embedding
-        bytes_ = split_tensor_into_chunks(file_bytes, input_size)
+        file_bytes = torch.tensor(file_bytes, dtype=torch.long).float()  # Convert to LongTensor for embedding
+        bytes_ = split_tensor_into_chunks(file_bytes, input_size, 1)
         outputs, hid = model(bytes_[0])
         for b in range(1, len(bytes_)):
-            outputs, hid = model(file_bytes[0], hid)
+            outputs, hid = model(bytes_[b], hid)
         loss = criterion(outputs, label)
         loss.backward()
         optimizer.step()
@@ -81,11 +81,11 @@ model.eval()
 onnx_path = "file_classifier_model.onnx"
 
 # Example input data (replace this with your actual data)
-dummy_input = torch.tensor(np.random.randint(0, 256, size=(batch_size, 1024)), dtype=torch.long)
+dummy_input = torch.tensor(np.random.randint(0, 256, size=(1, input_size)), dtype=torch.long)
 
 # Initialize dummy hidden and cell states
-dummy_hidden = torch.zeros(num_layers, batch_size, hidden_size)
-dummy_cell = torch.zeros(num_layers, batch_size, hidden_size)
+dummy_hidden = torch.zeros(num_layers, 1, hidden_size)
+dummy_cell = torch.zeros(num_layers, 1, hidden_size)
 
 torch.onnx.export(
     model,
