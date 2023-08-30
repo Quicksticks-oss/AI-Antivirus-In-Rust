@@ -14,5 +14,4 @@ Cargo.lock
 *.pdb
 Malware*
 trainer/malware-db.json
-
 trainer/db.json
