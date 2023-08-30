@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torch.onnx
 import json, random
-from model import MalwareModel
+from model import SimpleCNN
 
 def load_dataset():
     with open('db.json', 'rb') as f:
@@ -22,7 +22,7 @@ dataset = load_dataset()
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
 embedding_dim = 256  # Replace with the desired embedding dimension
-model = MalwareModel(max_byte_size, embedding_dim)
+model = SimpleCNN()
 
 # Define hyperparameters
 learning_rate = 0.001
@@ -37,9 +37,14 @@ for epoch in range(num_epochs):
     
     for i in range(10):
         x, y = get_batch(dataset)
+        batch_size = x.size(0)
+        channels = 3  # Assuming RGB images
+        height = 32
+        width = 32
+        reshaped_input = x.view(batch_size, channels, height, width)
         
         optimizer.zero_grad()
-        outputs = model(x)
+        outputs = model(reshaped_input.float())
         loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
