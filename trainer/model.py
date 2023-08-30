@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-class CustomModel(nn.Module):
+class MalwareModel(nn.Module):
     def __init__(self, max_byte_size, embedding_dim):
-        super(CustomModel, self).__init__()
+        super(MalwareModel, self).__init__()
         
         self.embedding = nn.Embedding(max_byte_size, embedding_dim)
         self.fc1 = nn.Linear(embedding_dim, 128)

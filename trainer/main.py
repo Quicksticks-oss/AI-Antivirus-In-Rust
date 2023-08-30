@@ -35,7 +35,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 # Training loop
 for epoch in range(num_epochs):
     
-    for x in range(10):
+    for i in range(10):
         x, y = get_batch(dataset)
         
         optimizer.zero_grad()
@@ -55,7 +55,7 @@ print("Training finished!")
 model.eval()  # Set the model to evaluation mode
 
 torch.save(model.state_dict(), 'model.pt')
-dummy_input = torch.randn(1, 10)  # Example input with the same shape as your actual input
+dummy_input = torch.randint(0, 255, size=(1,12))  # Example input with the same shape as your actual input
 
-torch.onnx.export(model, dummy_input, "model.onnx", verbose=False)
+torch.onnx.export(model, dummy_input, "MalwareModel.onnx", verbose=False)
 print("Model exported to ONNX successfully.")

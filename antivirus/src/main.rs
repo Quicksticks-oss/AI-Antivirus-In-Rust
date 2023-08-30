@@ -7,7 +7,7 @@ use ndarray::prelude::*;
 
 fn main() -> OrtResult<()> {
     println!("Loading model...");
-    let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join("model.onnx");
+    let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join("MalwareModel.onnx");
     match model_path.to_str() {
         Some(path_str) => println!("Path: {}", path_str),
         None => println!("Invalid Path"),
@@ -28,9 +28,8 @@ fn main() -> OrtResult<()> {
 
     println!("Loaded onnx model.");
 
-    let int_array: Array<i32, _> = Array::from_shape_vec((1, 10), vec![1, 2, 3, 4, 5, 6,7,8,9,10]).unwrap();
-    let float_array: Array2<f32> = int_array.mapv(|x| x as f32);
-    let numpy_array = CowArray::from(Array::from(float_array));
+    let int_array: Array<i64, _> = Array::from_shape_vec((1, 10), vec![1, 2, 3, 4, 5, 6,7,8,9,10]).unwrap();
+    let numpy_array = CowArray::from(Array::from(int_array));
     let farray = numpy_array.clone().insert_axis(Axis(0)).into_shape((1, 10)).unwrap().into_dyn();
 
     let inputs = vec![Value::from_array(session.allocator(), &farray)?];
