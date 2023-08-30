@@ -20,9 +20,9 @@ def get_batch(dataset):
 dataset = load_dataset()
 
 ## Instantiate the model
-vocab_size = 256  # Replace with the actual vocabulary size
+max_byte_size = 256  # Replace with the actual vocabulary size
 embedding_dim = 256  # Replace with the desired embedding dimension
-model = MalwareModel(vocab_size, embedding_dim)
+model = MalwareModel(max_byte_size, embedding_dim)
 
 # Define hyperparameters
 learning_rate = 0.001
@@ -55,7 +55,8 @@ print("Training finished!")
 model.eval()  # Set the model to evaluation mode
 
 torch.save(model.state_dict(), 'model.pt')
-dummy_input = torch.randint(0, 255, size=(1,12))  # Example input with the same shape as your actual input
+sample_input = torch.randint(0, max_byte_size, (1, 100))
 
-torch.onnx.export(model, dummy_input, "MalwareModel.onnx", verbose=False)
+traced_model = torch.jit.trace(model, sample_input)
+torch.onnx.export(traced_model, sample_input, "MalwareModel.onnx", verbose=False, dynamic_axes={'input': {0: 'batch_size', 1: 'sequence_length'}})
 print("Model exported to ONNX successfully.")

@@ -28,11 +28,9 @@ fn main() -> OrtResult<()> {
 
     println!("Loaded onnx model.");
 
-    let int_array: Array<i64, _> = Array::from_shape_vec((1, 10), vec![1, 2, 3, 4, 5, 6,7,8,9,10]).unwrap();
+    let int_array: Array<i64, _> = Array::from_shape_vec((1, 12), vec![1, 2, 3, 4, 5, 6,7,8,9,10,11,12,13]).unwrap();
     let numpy_array = CowArray::from(Array::from(int_array));
-    let farray = numpy_array.clone().insert_axis(Axis(0)).into_shape((1, 10)).unwrap().into_dyn();
-
-    println!("{}", farray);
+    let farray = numpy_array.clone().insert_axis(Axis(0)).into_shape((1, 13)).unwrap().into_dyn();
 
     let inputs = vec![Value::from_array(session.allocator(), &farray)?];
     let outputs: Vec<Value> = session.run(inputs)?;
