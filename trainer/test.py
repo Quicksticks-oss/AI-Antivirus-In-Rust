@@ -78,31 +78,27 @@ for epoch in range(num_epochs):
 # Save the trained model
 torch.save(model.state_dict(), "file_classifier_model.pth")
 model.eval()
-onnx_path = "file_classifier_model.onnx"
 
-# Example input data (replace this with your actual data)
-dummy_input = torch.tensor(np.random.randint(0, 256, size=(1, input_size)), dtype=torch.long)
+sample_input = torch.randn(batch_size, 1, input_size)
+hidden_state = torch.randn(num_layers, batch_size, hidden_size)
+cell_state = torch.randn(num_layers, batch_size, hidden_size)
+hidden = (hidden_state, cell_state)
 
-# Initialize dummy hidden and cell states
-dummy_hidden = torch.zeros(num_layers, 1, hidden_size)
-dummy_cell = torch.zeros(num_layers, 1, hidden_size)
-
+# Export the model to ONNX format
+onnx_path = "LSTM.onnx"
 torch.onnx.export(
-    model,
-    (dummy_input, (dummy_hidden, dummy_cell)),  # Pass input and initial states as tuple
-    onnx_path,
-    verbose=False,
-    input_names=["input", "hidden", "cell"],   # Names for input tensors
-    output_names=["output", "final_hidden", "final_cell"],  # Names for output tensors and states
+    model,                   # Model instance
+    (sample_input, hidden),  # Sample input, adjust if needed
+    onnx_path,               # Path to save the ONNX model
+    verbose=False,            # Print details while exporting
+    input_names=["input", "hidden"],          # Input names in ONNX graph
+    output_names=["output", "output_hidden"], # Output names in ONNX graph
     dynamic_axes={
-        "input": {0: "batch_size"},
-        "output": {0: "batch_size"},
-        "hidden": {1: "num_layers", 2: "batch_size"},  # Dynamic axes for states
-        "cell": {1: "num_layers", 2: "batch_size"},
-        "final_hidden": {1: "num_layers", 2: "batch_size"},  # Dynamic axes for final states
-        "final_cell": {1: "num_layers", 2: "batch_size"}
-    },
-    opset_version=11  # Use the appropriate ONNX opset version
+        "input": {0: "batch_size", 1: "sequence_length"},
+        "output": {0: "batch_size", 1: "sequence_length"},
+        "hidden": {0: "num_layers", 1: "batch_size", 2: "hidden_size"},
+        "output_hidden": {0: "num_layers", 1: "batch_size", 2: "hidden_size"}
+    }  # Dynamic axes for variable length sequences
 )
 
 print(f"Model exported to {onnx_path}")
