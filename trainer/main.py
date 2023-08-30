@@ -3,57 +3,53 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import torch.onnx
+import json, random
+from model import MalwareModel
 
-class Model(nn.Module):
-    def __init__(self, input_size:int, hidden_size:int=32, output_size:int=2):
-        super(Model, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.output_size = output_size
+def load_dataset():
+    with open('db.json', 'rb') as f:
+        return json.load(f)
 
-        self.input_layer = nn.Linear(self.input_size, self.hidden_size)
-        self.hidden_layer = nn.Linear(self.hidden_size, self.hidden_size)
-        self.output_layer = nn.Linear(self.hidden_size, self.output_size)
+def get_batch(dataset):
+    index = random.choice(['malware', 'safe'])
+    ix = random.randint(0, len(dataset[index])-1)
+    batch_data = dataset[index][ix][-1]
+    y_output = torch.tensor([1.0, 0.0]) if index == 'malware' else torch.tensor([0.0, 1.0])
+    return torch.tensor([batch_data]), y_output.unsqueeze(0)
 
-        self.relu = nn.ReLU()
+dataset = load_dataset()
 
-    def forward(self, x):
-        x = self.input_layer(x)
-        x = self.relu(x)
-        x = self.hidden_layer(x)
-        x = self.relu(x)
-        x = self.output_layer(x)
-        return x
+## Instantiate the model
+vocab_size = 256  # Replace with the actual vocabulary size
+embedding_dim = 256  # Replace with the desired embedding dimension
+model = MalwareModel(vocab_size, embedding_dim)
 
+# Define hyperparameters
+learning_rate = 0.001
+num_epochs = 30
 
-# Create a toy dataset
-X = torch.randn(1000, 10)  # 1000 samples with 10 features each
-y = torch.randint(0, 2, (1000,))  # Binary labels (0 or 1)
-
-
-# Create DataLoader for batching
-dataset = TensorDataset(X, y)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-
-# Instantiate the model
-model = Model(input_size=10)
-
-# Define loss function and optimizer
+# Loss function and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # Training loop
-num_epochs = 1000
 for epoch in range(num_epochs):
-    total_loss = 0.0
-    for batch_X, batch_y in dataloader:
-        optimizer.zero_grad()  # Zero the gradients
-        outputs = model(batch_X)
-        loss = criterion(outputs, batch_y)
+    
+    for x in range(10):
+        x, y = get_batch(dataset)
+        
+        optimizer.zero_grad()
+        outputs = model(x)
+        loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
-        total_loss += loss.item()
-    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}")
+    
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+print("Training finished!")
+
+# Save the trained model
+torch.save(model.state_dict(), 'custom_model.pth')
 
 print("Training finished!")
 model.eval()  # Set the model to evaluation mode
