@@ -29,7 +29,7 @@ def split_tensor(input_tensor, chunk_size):
 dataset = load_dataset()
 
 device = torch.device('cuda')
-print(device)
+print(f'Device: {device}')
 
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
