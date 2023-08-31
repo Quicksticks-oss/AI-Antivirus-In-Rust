@@ -45,7 +45,6 @@ num_epochs = 30
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-loss = 0
 # Training loop
 for epoch in range(num_epochs):
     for i in range(16):
@@ -54,13 +53,17 @@ for epoch in range(num_epochs):
         tensor_x = split_tensor(x, 1000000)
         for _ in range(len(tensor_x)-1):
             tx = tensor_x[_].unsqueeze(0).to(device)
-            optimizer.zero_grad()
-            outputs = model(tx)
-            loss = criterion(outputs, y)
-            loss.backward()
-            optimizer.step()
+            if tx.shape[0] > 0 and tx.shape[1] > 0:
+                optimizer.zero_grad()
+                outputs = model(tx)
+                loss = criterion(outputs, y)
+                loss.backward()
+                optimizer.step()
     
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    if loss!= None:
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    else:
+        print(loss)
 
 print("Training finished!")
 
