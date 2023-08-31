@@ -57,33 +57,10 @@ fn main() -> OrtResult<()> {
     };
 
     let data: &[u8] = &mmap;
-
-    let num_elements = data.len() / 4;
+    let num_elements = data.len();
     let shape = (1, num_elements);
-
-    println!("{}", num_elements);
-
-    let mut array_data = Vec::with_capacity(num_elements);
-
-    for i in 0..num_elements {
-        let offset = i * 4;
-        let value = i32::from_le_bytes([
-            data[offset],
-            data[offset + 1],
-            data[offset + 2],
-            data[offset + 3],
-        ]);
-        array_data.push(value);
-    }
-
-    println!("{}", num_elements);
-
-    println!("{:?}", array_data);
-
-    //println!("{:?}", array_data);
+    let array_data: Vec<i32> = data.iter().map(|&byte| byte as i32).collect();
     let int_array = Array2::from_shape_vec(Ix2(shape.0, shape.1), array_data).unwrap();
-
-    println!("Array: {}", int_array);
 
     let start_time = Instant::now();
     println!("Running inference...");
