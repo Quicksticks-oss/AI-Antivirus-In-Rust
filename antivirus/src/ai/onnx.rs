@@ -4,7 +4,6 @@ use ort::tensor::ort_owned_tensor::ViewHolder;
 
 pub fn run_onnx_inference(ort_ession: Session, int_array: Array2<i32>) -> bool {
     let shape = int_array.shape();
-    println!("{:?}", shape);
     let converted_array = int_array.map(|&x| x as i64);
     let cow_array: CowArray<i64, Ix2> = CowArray::from(converted_array);
     let farray = cow_array

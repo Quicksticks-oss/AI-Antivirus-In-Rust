@@ -6,7 +6,6 @@ use ort::{
 	LoggingLevel, Environment, ExecutionProvider, GraphOptimizationLevel, OrtResult, SessionBuilder
 };
 use std::path::Path;
-use ndarray::Array;
 use ndarray::prelude::*;
 use std::time::Instant;
 use ai::onnx;
