@@ -8,7 +8,7 @@ from model import MalwareModel
 import time
 
 def load_dataset():
-    with open('db.json', 'rb') as f:
+    with open('malware-db.json', 'rb') as f:
         return json.load(f)
 
 def get_batch(dataset):
@@ -22,7 +22,7 @@ dataset = load_dataset()
 
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
-embedding_dim = 256  # Replace with the desired embedding dimension
+embedding_dim = 512  # Replace with the desired embedding dimension
 model = MalwareModel(max_byte_size, embedding_dim)
 
 # Define hyperparameters
