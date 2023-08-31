@@ -9,9 +9,12 @@ rpath = true
 [profile.release]
 rpath = true
 
+[target.x86_64-unknown-linux-gnu]
+rustflags = [ "-Clink-args=-Wl,-rpath,\\$ORIGIN" ]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ort = "1.15.2"
+ort = { version = "1.15.2", features = [ "load-dynamic" ] }
 ndarray = "0.15.6"
 memmap = "0.7"
