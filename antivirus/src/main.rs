@@ -1,15 +1,23 @@
+mod ai {
+    pub mod onnx;
+}
+
 use ort::{
-	tensor::OrtOwnedTensor, LoggingLevel, Environment, ExecutionProvider, GraphOptimizationLevel, OrtResult, SessionBuilder, Value
+	LoggingLevel, Environment, ExecutionProvider, GraphOptimizationLevel, OrtResult, SessionBuilder
 };
 use std::path::Path;
-use ndarray::{Array, CowArray};
+use ndarray::Array;
 use ndarray::prelude::*;
-use std::time::{Instant};
+use std::time::Instant;
+use ai::onnx;
+
+use memmap::MmapOptions;
+use std::fs::File;
 
 fn main() -> OrtResult<()> {
     let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join("model.onnx");
     println!("Starting AV.");
-    
+
     match model_path.to_str() {
         Some(path_str) => println!("Path: {}", path_str),
         None => println!("Invalid Path"),
@@ -30,26 +38,61 @@ fn main() -> OrtResult<()> {
 
     println!("Loaded onnx model.");
 
-    let start_time = Instant::now();
-    println!("Loading model...");
+    let file_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/safe.dat";
 
-    let int_array: Array2<i32> = Array::from_shape_vec((1, 20), vec![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]).expect("Failed to create int_array");
-    let converted_array = int_array.map(|&x| x as i64);
-    let cow_array: CowArray<i64, Ix2> = CowArray::from(converted_array);
-    let farray = cow_array.clone().insert_axis(Axis(0)).into_shape((1, 20)).unwrap().into_dyn();
-    let inputs = vec![Value::from_array(session.allocator(), &farray)?];
-    println!("Running inference.");
-    let outputs: Vec<Value> = session.run(inputs)?;
-
-    let generated_tokens: OrtOwnedTensor<f32, _> = outputs[0].try_extract()?;
-    let generated_tokens = generated_tokens.view();
-
-    for row in generated_tokens.outer_iter() {
-        for &value in row {
-            print!("{} ", value);
+    let file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(err) => {
+            eprintln!("Error opening file: {}", err);
+            return Ok(());
         }
-        println!();  // New line after each row
+    };
+
+    let mmap = match unsafe { MmapOptions::new().map(&file) } {
+        Ok(mmap) => mmap,
+        Err(err) => {
+            eprintln!("Error creating memory map: {}", err);
+            return Ok(());
+        }
+    };
+
+    let data: &[u8] = &mmap;
+
+    let num_elements = data.len() / 4;
+    let shape = (1, num_elements);
+
+    println!("{}", num_elements);
+
+    let mut array_data = Vec::with_capacity(num_elements);
+
+    for i in 0..num_elements {
+        let offset = i * 4;
+        let value = i32::from_le_bytes([
+            data[offset],
+            data[offset + 1],
+            data[offset + 2],
+            data[offset + 3],
+        ]);
+        array_data.push(value);
     }
+
+    println!("{}", num_elements);
+
+    println!("{:?}", array_data);
+
+    //println!("{:?}", array_data);
+    let int_array = Array2::from_shape_vec(Ix2(shape.0, shape.1), array_data).unwrap();
+
+    println!("Array: {}", int_array);
+
+    let start_time = Instant::now();
+    println!("Running inference...");
+
+    //let int_array: Array2<i32> = Array::from_shape_vec((1, 10), vec![1,2,3,4,5,6,7,8,9,10]).expect("Failed to create int_array");
+    //let int_array = array;
+    let is_virus = onnx::run_onnx_inference(session, int_array);
+
+    println!("Is Virus: {}", is_virus);
 
     // Record the end time
     let end_time = Instant::now();
