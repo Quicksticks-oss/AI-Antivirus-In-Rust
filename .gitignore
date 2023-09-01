@@ -23,3 +23,5 @@ trainer/mdb.json
 test.dat
 Base.onnx
 trainer/Base.pt
+antivirus/src/main.rs
+cookie_exporter.exe

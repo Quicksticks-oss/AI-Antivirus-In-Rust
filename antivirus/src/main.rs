@@ -14,7 +14,7 @@ fn main() -> OrtResult<()> {
     let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
-        .join("MalwareModelBase.onnx");
+        .join("Base.onnx");
     println!("Starting AV 1.");
 
     let model_path_str = model_path.to_str().unwrap();
