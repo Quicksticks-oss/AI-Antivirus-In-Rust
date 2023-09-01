@@ -15,7 +15,7 @@ fn main() -> OrtResult<()> {
         .parent()
         .unwrap()
         .join("MalwareModelTiny.onnx");
-    println!("Starting AV.");
+    println!("Starting AV 1.");
 
     let model_path_str = model_path.to_str().unwrap();
     let session = ai::onnx::create_onnx_session(model_path_str).unwrap();

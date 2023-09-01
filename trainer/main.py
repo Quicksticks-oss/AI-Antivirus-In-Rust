@@ -9,7 +9,7 @@ from tqdm import tqdm
 import time
 
 def load_dataset():
-    with open('mdb.json', 'rb') as f:
+    with open('db.json', 'rb') as f:
         return json.load(f)
 
 def get_batch(dataset):
@@ -17,6 +17,7 @@ def get_batch(dataset):
     ix = random.randint(0, len(dataset[index])-1)
     batch_data = dataset[index][ix][-1]
     y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
+    #print(y_output, index)
     return torch.tensor([batch_data]).to(torch.int32), y_output.unsqueeze(0)
 
 def split_tensor(input_tensor, chunk_size):
@@ -34,13 +35,13 @@ print(f'Device: {device}')
 
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
-embedding_dim = 64  # Replace with the desired embedding dimension
+embedding_dim = 256  # Replace with the desired embedding dimension
 model = MalwareModel(max_byte_size, embedding_dim)
 model = model.to(device)
 
 # Define hyperparameters
 learning_rate = 0.001
-num_epochs = 600
+num_epochs = 30000
 
 loss = None
 
@@ -54,27 +55,25 @@ for epoch in td:
     x, y = get_batch(dataset)
     y = y.to(device)
     tensor_x = split_tensor(x, 1000000)
-    for _ in range(len(tensor_x)-1):
+    for _ in range(len(tensor_x)):
         tx = tensor_x[_].unsqueeze(0).to(device)
         if tx.shape[0] > 0 and tx.shape[1] > 0:
             optimizer.zero_grad()
             outputs = model(tx)
-            loss = criterion(outputs, y.view(-1))
+            loss = criterion(outputs, y)
             loss.backward()
             optimizer.step()
     
     if loss != None:
         #print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-        td.set_description(f'loss: {loss.item():.4f}')
-    else:
-        print(loss)
+        td.set_description(f'loss: {abs(loss.item()):.4f}')
 
 print("Training finished!")
 
 model.eval()  # Set the model to evaluation mode
 model.to(torch.device('cpu'))
 
-torch.save(model.state_dict(), 'MalwareModelTiny.pt')
+torch.save(model.state_dict(), 'MalwareModelLarge.pt')
 
 input_data = torch.LongTensor(1, 128).random_(0, max_byte_size)
 
@@ -82,7 +81,7 @@ input_data = torch.LongTensor(1, 128).random_(0, max_byte_size)
 torch.onnx.export(
     model,          # Model to export
     input_data,               # Sample input data
-    "MalwareModelTiny.onnx",   # File name to save the ONNX model
+    "MalwareModelLarge.onnx",   # File name to save the ONNX model
     verbose=False,
     input_names=["input"],    # Names for the input tensors
     output_names=["output"],  # Names for the output tensors

@@ -50,7 +50,9 @@ pub fn run_onnx_inference(ort_ession: &Session, int_array: &Array2<i32>) -> bool
     let value_00 = generated_tokens_view[[0, 0]];
     let value_01 = generated_tokens_view[[0, 1]];
 
-    let result = value_00 < value_01;
+    let value = value_00+value_01;
+
+    let result = value < 0.1;
 
     result
 }

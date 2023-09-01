@@ -34,10 +34,9 @@ pub fn infer_file(file_path: &str, ort_session: &Session, chunk_size: usize) -> 
 
     for chunk in &chunks {
         let is_virus = onnx::run_onnx_inference(ort_session, chunk);
-        println!("{}", is_virus);
-        //if is_virus == true {
-        //    return is_virus;
-        //}
+        if is_virus == true {
+            return is_virus;
+        }
     }
 
     return is_virus;
