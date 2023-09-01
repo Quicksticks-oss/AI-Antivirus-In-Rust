@@ -38,7 +38,7 @@ model = MalwareModel(max_byte_size, embedding_dim)
 model = model.to(device)
 
 # Define hyperparameters
-learning_rate = 0.001
+learning_rate = 0.0001
 num_epochs = 300
 
 # Loss function and optimizer
