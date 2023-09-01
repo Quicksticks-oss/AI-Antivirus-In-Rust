@@ -5,11 +5,7 @@ mod tools {
     pub mod convert;
 }
 pub mod infer;
-
-use ort::{
-    Environment, ExecutionProvider, GraphOptimizationLevel, LoggingLevel, OrtResult, SessionBuilder,
-};
-
+use ort::OrtResult;
 use std::path::Path;
 use std::time::Instant;
 
@@ -21,29 +17,14 @@ fn main() -> OrtResult<()> {
         .join("MalwareModelSmall.onnx");
     println!("Starting AV.");
 
-    match model_path.to_str() {
-        Some(path_str) => println!("Path: {}", path_str),
-        None => println!("Invalid Path"),
-    }
-
-    let environment = Environment::builder()
-        .with_name("Encode")
-        .with_log_level(LoggingLevel::Warning)
-        .with_execution_providers([ExecutionProvider::CPU(Default::default())])
-        .build()?
-        .into_arc();
-
-    let session = SessionBuilder::new(&environment)?
-        .with_optimization_level(GraphOptimizationLevel::Level3)?
-        .with_intra_threads(1)?
-        .with_model_from_file(model_path)
-        .unwrap();
+    let model_path_str = model_path.to_str().unwrap();
+    let session = ai::onnx::create_onnx_session(model_path_str).unwrap();
 
     println!("Loaded onnx model.");
     let start_time = Instant::now();
 
     println!("Running inference...");
-    let file_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/safe.dat";
+    let file_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/test.dat";
     let is_virus = infer::infer_file(file_path, &session, chunk_size);
     println!("Is Virus: {}", is_virus);
 

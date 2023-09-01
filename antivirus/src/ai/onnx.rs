@@ -2,6 +2,27 @@ use ndarray::{Array2, Axis, CowArray, Ix2};
 use ort::{Session, Value};
 use ort::tensor::ort_owned_tensor::ViewHolder;
 
+use ort::{
+    Environment, ExecutionProvider, GraphOptimizationLevel, LoggingLevel, OrtError, SessionBuilder,
+};
+
+pub fn create_onnx_session(model_path: &str) -> Result<Session, OrtError>{
+    let environment = Environment::builder()
+        .with_name("Encode")
+        .with_log_level(LoggingLevel::Warning)
+        .with_execution_providers([ExecutionProvider::CPU(Default::default())])
+        .build()?
+        .into_arc();
+
+    let session = SessionBuilder::new(&environment)?
+        .with_optimization_level(GraphOptimizationLevel::Level3)?
+        .with_intra_threads(1)?
+        .with_model_from_file(model_path)
+        .unwrap();
+
+    Ok(session)
+}
+
 pub fn run_onnx_inference(ort_ession: &Session, int_array: &Array2<i32>) -> bool {
     let shape = int_array.shape();
     let converted_array = int_array.map(|&x| x as i64);

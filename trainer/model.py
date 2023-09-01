@@ -6,10 +6,10 @@ class MalwareModel(nn.Module):
         super(MalwareModel, self).__init__()
         
         self.embedding = nn.Embedding(max_byte_size, embedding_dim)
-        self.fc1 = nn.Linear(embedding_dim, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(32, 2)
+        self.fc1 = nn.Linear(embedding_dim, embedding_dim)
+        self.fc2 = nn.Linear(embedding_dim, embedding_dim)
+        self.fc3 = nn.Linear(embedding_dim, embedding_dim)
+        self.fc4 = nn.Linear(embedding_dim, 2)
         
     def forward(self, x):
         x = self.embedding(x)

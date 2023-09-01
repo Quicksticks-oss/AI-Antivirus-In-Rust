@@ -19,3 +19,5 @@ trainer/__pycache__/model.cpython-310.pyc
 trainer/custom_model.pth
 model.onnx
 .git2/*
+trainer/mdb.json
+test.dat

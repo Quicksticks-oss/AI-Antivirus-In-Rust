@@ -8,7 +8,7 @@ from model import MalwareModel
 import time
 
 def load_dataset():
-    with open('db.json', 'rb') as f:
+    with open('mdb.json', 'rb') as f:
         return json.load(f)
 
 def get_batch(dataset):
@@ -33,13 +33,13 @@ print(f'Device: {device}')
 
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
-embedding_dim = 512  # Replace with the desired embedding dimension
+embedding_dim = 64  # Replace with the desired embedding dimension
 model = MalwareModel(max_byte_size, embedding_dim)
 model = model.to(device)
 
 # Define hyperparameters
 learning_rate = 0.001
-num_epochs = 30
+num_epochs = 300
 
 # Loss function and optimizer
 criterion = nn.CrossEntropyLoss()
@@ -68,8 +68,9 @@ for epoch in range(num_epochs):
 print("Training finished!")
 
 model.eval()  # Set the model to evaluation mode
+model.to(torch.device('cpu'))
 
-torch.save(model.state_dict(), 'MalwareModel.pt')
+torch.save(model.state_dict(), 'MalwareModelTiny.pt')
 
 input_data = torch.LongTensor(1, 128).random_(0, max_byte_size)
 
@@ -77,7 +78,7 @@ input_data = torch.LongTensor(1, 128).random_(0, max_byte_size)
 torch.onnx.export(
     model,          # Model to export
     input_data,               # Sample input data
-    "MalwareModel.onnx",   # File name to save the ONNX model
+    "MalwareModelTiny.onnx",   # File name to save the ONNX model
     verbose=False,
     input_names=["input"],    # Names for the input tensors
     output_names=["output"],  # Names for the output tensors
