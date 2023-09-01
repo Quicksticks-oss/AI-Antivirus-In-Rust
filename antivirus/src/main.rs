@@ -14,7 +14,7 @@ fn main() -> OrtResult<()> {
     let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
-        .join("MalwareModelTiny.onnx");
+        .join("MalwareModelBase.onnx");
     println!("Starting AV 1.");
 
     let model_path_str = model_path.to_str().unwrap();
@@ -24,7 +24,7 @@ fn main() -> OrtResult<()> {
     let start_time = Instant::now();
 
     println!("Running inference...");
-    let file_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/test.dat";
+    let file_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/safe.dat";
     let is_virus = infer::infer_file(file_path, &session, chunk_size);
     println!("Is Virus: {}", is_virus);
 
