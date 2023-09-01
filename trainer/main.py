@@ -39,7 +39,7 @@ model = model.to(device)
 
 # Define hyperparameters
 learning_rate = 0.0001
-num_epochs = 300
+num_epochs = 200
 
 # Loss function and optimizer
 criterion = nn.CrossEntropyLoss()
