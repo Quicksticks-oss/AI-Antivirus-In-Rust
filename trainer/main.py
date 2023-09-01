@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import torch.onnx
 import json, random
 from model import MalwareModel
+from tqdm import tqdm
 import time
 
 def load_dataset():
@@ -38,30 +39,33 @@ model = MalwareModel(max_byte_size, embedding_dim)
 model = model.to(device)
 
 # Define hyperparameters
-learning_rate = 0.0001
-num_epochs = 100
+learning_rate = 0.001
+num_epochs = 600
+
+loss = None
 
 # Loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+td = tqdm(range(0, num_epochs), dynamic_ncols=True)
 # Training loop
-for epoch in range(num_epochs):
-    for i in range(16):
-        x, y = get_batch(dataset)
-        y = y.to(device)
-        tensor_x = split_tensor(x, 1000000)
-        for _ in range(len(tensor_x)-1):
-            tx = tensor_x[_].unsqueeze(0).to(device)
-            if tx.shape[0] > 0 and tx.shape[1] > 0:
-                optimizer.zero_grad()
-                outputs = model(tx)
-                loss = criterion(outputs, y.view(-1))
-                loss.backward()
-                optimizer.step()
+for epoch in td:
+    x, y = get_batch(dataset)
+    y = y.to(device)
+    tensor_x = split_tensor(x, 1000000)
+    for _ in range(len(tensor_x)-1):
+        tx = tensor_x[_].unsqueeze(0).to(device)
+        if tx.shape[0] > 0 and tx.shape[1] > 0:
+            optimizer.zero_grad()
+            outputs = model(tx)
+            loss = criterion(outputs, y.view(-1))
+            loss.backward()
+            optimizer.step()
     
-    if loss!= None:
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+    if loss != None:
+        #print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+        td.set_description(f'loss: {loss.item():.4f}')
     else:
         print(loss)
 
