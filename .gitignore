@@ -21,3 +21,5 @@ model.onnx
 .git2/*
 trainer/mdb.json
 test.dat
+Base.onnx
+trainer/Base.pt
