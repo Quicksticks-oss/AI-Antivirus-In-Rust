@@ -15,7 +15,7 @@ def get_batch(dataset):
     index = random.choice(['malware', 'safe'])
     ix = random.randint(0, len(dataset[index])-1)
     batch_data = dataset[index][ix][-1]
-    y_output = torch.tensor([1.0, 0.0]) if index == 'malware' else torch.tensor([0.0, 1.0])
+    y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
     return torch.tensor([batch_data]).to(torch.int32), y_output.unsqueeze(0)
 
 def split_tensor(input_tensor, chunk_size):
@@ -56,7 +56,7 @@ for epoch in range(num_epochs):
             if tx.shape[0] > 0 and tx.shape[1] > 0:
                 optimizer.zero_grad()
                 outputs = model(tx)
-                loss = criterion(outputs, y)
+                loss = criterion(outputs, y.view(-1))
                 loss.backward()
                 optimizer.step()
     
