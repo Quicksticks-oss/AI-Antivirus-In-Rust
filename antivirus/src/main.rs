@@ -22,7 +22,7 @@ fn main() -> OrtResult<()> {
     println!("Loaded onnx model.");
     let start_time = Instant::now();
 
-    let directory_path = "/media/reaktor/Data Drive/GithubRepos/Malware/malware"; // Change this to the directory you want to traverse.
+    let directory_path = "/media/reaktor/Data Drive/GithubRepos/Malware/safe"; // Change this to the directory you want to traverse.
 
     for entry in WalkDir::new(directory_path) {
         if let Ok(entry) = entry {

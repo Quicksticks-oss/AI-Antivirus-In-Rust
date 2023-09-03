@@ -34,16 +34,7 @@ def get_batch(dataset, types):
 
     batch_data = dataset[index][ix][-1]
 
-    #my_list = [0] * len(types)
-    #if index == 'malware':
-    #    type_ = dataset[index][ix][1]
-    #else:
-    #    type_ = 'Safe.File'
-    #my_list[types.index(type_)] = 1.0
-
     y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
-    #y_output = torch.tensor(my_list)
-
     return batch_data, y_output.unsqueeze(0)
 
 def split_tensor(input_tensor, chunk_size):
@@ -96,7 +87,7 @@ model = MalwareModel(max_byte_size, embedding_dim, 2)#len(types))
 model = model.to(device)
 
 # Define hyperparameters
-learning_rate = 0.0001
+learning_rate = 0.01
 num_epochs = 64000
 
 losses = []
