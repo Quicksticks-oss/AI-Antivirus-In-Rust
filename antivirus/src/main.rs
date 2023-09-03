@@ -14,7 +14,7 @@ fn main() -> OrtResult<()> {
     let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
-        .join("MalwareModelMedium.onnx");
+        .join("MalwareModelNewS.onnx");
     let model_path_str = model_path.to_str().unwrap();
     let chunk_size = 1048576;
     let session = ai::onnx::create_onnx_session(model_path_str).unwrap();
@@ -22,7 +22,7 @@ fn main() -> OrtResult<()> {
     println!("Loaded onnx model.");
     let start_time = Instant::now();
 
-    let directory_path = "/"; // Change this to the directory you want to traverse.
+    let directory_path = "/media/reaktor/Data Drive/GithubRepos/Malware/malware"; // Change this to the directory you want to traverse.
 
     for entry in WalkDir::new(directory_path) {
         if let Ok(entry) = entry {
