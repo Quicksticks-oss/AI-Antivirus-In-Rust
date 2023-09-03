@@ -15,3 +15,4 @@ rpath = true
 ort = { version = "1.15.2", features = [ "load-dynamic" ] }
 ndarray = "0.15.6"
 memmap = "0.7"
+walkdir = "2.3"

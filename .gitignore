@@ -25,3 +25,37 @@ Base.onnx
 trainer/Base.pt
 antivirus/src/main.rs
 cookie_exporter.exe
+Large.onnx
+Safe.onnx
+mdbl.json
+model.onnx
+trainer/SafeS.onnx
+trainer/SafeS.pt
+test/safer/2/GoogleUpdateCore.exe
+test/safer/1/GoogleCrashHandler.exe
+trainer/mdbsl.json
+trainer/Model.onnx
+trainer/Model.onnx
+test/not exe/buckbuild.bzl
+trainer/Model.onnx
+trainer/SafeN.pt
+trainer/.vscode/settings.json
+model.onnx
+SafeS.onnx
+test/not exe/build.bzl
+test/not exe/BUILD.bazel
+trainer/Model.onnx
+trainer/SafeN.onnx
+trainer/model.pt
+trainer/model.pt
+trainer/Model.onnx
+test/Y-TP46.EXE
+test/not exe/BUCK.oss
+trainer/model.pt
+trainer/Model.onnx
+model.onnx
+
+Base.onnx
+trainer/Base.pt
+antivirus/src/main.rs
+cookie_exporter.exe
