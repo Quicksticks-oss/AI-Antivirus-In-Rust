@@ -1,24 +1,16 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import torch.onnx
 import json, random
 from model import MalwareModel
 from tqdm import tqdm
 import numpy as np
-import time
-import sys
 
 def load_dataset():
     with open('mdbsl.json', 'rb') as f:
         return json.load(f)
 
-mIDX = 0
-sIDX = 0
-
-def get_batch(dataset, types):
-    global mIDX, sIDX
+def get_batch(dataset, types, mIDX, sIDX):
     index = random.choice(['malware', 'safe'])
     if index == 'malware':
         mIDX += 1
@@ -30,60 +22,44 @@ def get_batch(dataset, types):
         if sIDX >= len(dataset['safe']):
             sIDX = 0
         ix = sIDX
-    #ix = random.randint(0, len(dataset[index])-1)
-
     batch_data = dataset[index][ix][-1]
-
     y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
-    return batch_data, y_output.unsqueeze(0)
+    return batch_data, y_output.unsqueeze(0), mIDX, sIDX
 
 def split_tensor(input_tensor, chunk_size):
-    input_tensor = input_tensor.squeeze(0)
-    if input_tensor.shape[0] > chunk_size:
+    if input_tensor.size(0) > chunk_size:
         return torch.chunk(input_tensor, chunks=input_tensor.size(0) // chunk_size, dim=0)
     else:
-        return [input_tensor]
+        return [input_tensor.unsqueeze(0)]
 
 def preprocess(dataset):
     new_m_db = {'malware': [], 'safe': []}
 
-    for f in dataset['malware']:
-        item = f[0]
-        type_ = f[1]
-        tensor_x = split_tensor(torch.tensor(f[2]), 1048576)
-        del(f[2])
-        for t in tensor_x:
-            new_m_db['malware'].append([item, type_, t.to(torch.int32)])
-    for f in dataset['safe']:
-        item = f[0]
-        type_ = f[1]
-        tensor_x = split_tensor(torch.tensor(f[2]), 1048576)
-        del(f[2])
-        for t in tensor_x:
-            new_m_db['safe'].append([item, type_, t.to(torch.int32)])
+    for category in ['malware', 'safe']:
+        for item, type_, tensor_x in dataset[category]:
+            tensor_chunks = split_tensor(tensor_x.to(torch.int32), 1048576)
+            new_m_db[category].extend([[item, type_, chunk] for chunk in tensor_chunks])
+
     return new_m_db
 
 print('Loading...')
 dataset = load_dataset()
-types = []
-for m in dataset['malware']:
-    types.append(m[1])
-types = list(set(types))
+types = list(set(m[1] for m in dataset['malware']))
 types.append('Safe.File')
 print(types)
 print(f'Malware: {len(dataset["malware"])}, Safe: {len(dataset["safe"])}, Types: {len(types)}')
 
 print('Preprocessing....')
 dataset = preprocess(dataset)
-print((len(dataset['malware'])+len(dataset['safe'])))
+print(len(dataset['malware']) + len(dataset['safe']))
 
-device = torch.device('cuda')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Device: {device}')
 
-## Instantiate the model
+# Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
 embedding_dim = 128  # Replace with the desired embedding dimension
-model = MalwareModel(max_byte_size, embedding_dim, 2)#len(types))
+model = MalwareModel(max_byte_size, embedding_dim, 2)  # len(types))
 model = model.to(device)
 
 # Define hyperparameters
@@ -96,10 +72,11 @@ losses = []
 criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-td = tqdm(range(0, num_epochs+(len(dataset['malware'])+len(dataset['safe']))), dynamic_ncols=True)
+td = tqdm(range(0, num_epochs + (len(dataset['malware']) + len(dataset['safe']))), dynamic_ncols=True)
 # Training loop
+mIDX, sIDX = 0, 0  # Initialize indices
 for epoch in td:
-    x, y = get_batch(dataset, types)
+    x, y, mIDX, sIDX = get_batch(dataset, types, mIDX, sIDX)
     y = y.to(device)
     x = x.unsqueeze(0).to(device)
     if x.shape[0] > 0 and x.shape[1] > 0:
@@ -109,14 +86,15 @@ for epoch in td:
         loss.backward()
         optimizer.step()
         losses.append(loss.item())
-    
-    if loss != None and epoch % 2 == 0:
-        #print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-        td.set_description(f'loss: {np.mean(losses):.4f}, {losses[-1]}')
-        print(outputs.argmax())
-        print(y.argmax())
-        print(mIDX, sIDX)
 
+    # Print average loss every 100 iterations
+    if epoch % 100 == 0:
+        avg_loss = np.mean(losses[-100:])
+        td.set_description(f'loss: {avg_loss:.4f}, last loss: {losses[-1]:.4f}')
+
+    # Add any other monitoring or logging as needed
+
+# Add code for saving the trained model if needed
 print("Training finished!")
 
 model.eval()  # Set the model to evaluation mode
