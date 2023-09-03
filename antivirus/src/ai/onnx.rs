@@ -79,7 +79,7 @@ pub fn run_onnx_inference(ort_ession: &Session, int_array: &Array2<i32>) -> bool
     //println!("Index of max value: {}", min_index);
     //println!("{:?}", generated_tokens.view());
 
-    let result = min_index != generated_tokens.shape()[1]-1;
+    let result = min_index != generated_tokens.shape()[1]-1 && min_value > 0.0;
 
     result
 }

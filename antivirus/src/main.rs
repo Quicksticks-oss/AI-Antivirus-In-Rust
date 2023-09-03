@@ -14,7 +14,7 @@ fn main() -> OrtResult<()> {
     let model_path: std::path::PathBuf = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
-        .join("MalwareModelNew.onnx");
+        .join("MalwareModelMedium.onnx");
     let model_path_str = model_path.to_str().unwrap();
     let chunk_size = 1048576;
     let session = ai::onnx::create_onnx_session(model_path_str).unwrap();
@@ -22,19 +22,29 @@ fn main() -> OrtResult<()> {
     println!("Loaded onnx model.");
     let start_time = Instant::now();
 
-    let directory_path = "/media/reaktor/Data Drive/GithubRepos/AI-Antivirus-In-Rust/test"; // Change this to the directory you want to traverse.
+    let directory_path = "/"; // Change this to the directory you want to traverse.
 
     for entry in WalkDir::new(directory_path) {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.is_file() {
-            let file_path = path.to_str().unwrap_or("");
-            let extension_str: String = path.extension().unwrap().to_str().unwrap_or("").to_lowercase();
-            if extension_str == "exe"{
-                let is_virus = infer::infer_file(file_path, &session, chunk_size);
-                println!("Is Virus: {}, File: {:?}", is_virus, file_path);
+        if let Ok(entry) = entry {
+            let path = entry.path();
+    
+            if path.is_file() {
+                if let Some(file_path) = path.to_str() {
+                    if let Some(extension) = path.extension() {
+                        if let Some(extension_str) = extension.to_str() {
+                            let extension_str_lower = extension_str.to_lowercase();
+                            if extension_str_lower == "exe" {
+                                let is_virus = infer::infer_file(file_path, &session, chunk_size);
+                                println!("Is Virus: {}, File: {:?}", is_virus, file_path);
+                            }
+                        }
+                    }
+                }
             }
+            //println!("{:?}", path);
+        } else {
+            // Handle the error, e.g., print an error message or return an error code.
+            eprintln!("Error: {:?}", entry.err());
         }
     }
 
