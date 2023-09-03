@@ -88,13 +88,13 @@ print(f'Device: {device}')
 
 ## Instantiate the model
 max_byte_size = 256  # Replace with the actual vocabulary size
-embedding_dim = 96  # Replace with the desired embedding dimension
+embedding_dim = 128  # Replace with the desired embedding dimension
 model = MalwareModel(max_byte_size, embedding_dim, len(types))
 model = model.to(device)
 
 # Define hyperparameters
-learning_rate = 0.001
-num_epochs = 512000
+learning_rate = 0.0001
+num_epochs = 64000
 
 losses = []
 
@@ -128,7 +128,7 @@ print("Training finished!")
 model.eval()  # Set the model to evaluation mode
 model.to(torch.device('cpu'))
 
-torch.save(model.state_dict(), f"MalwareModelNew.pt")
+torch.save(model.state_dict(), f"MalwareModelNewS.pt")
 
 input_data = torch.LongTensor(1, 128).random_(0, max_byte_size).to(torch.int32)
 
@@ -136,7 +136,7 @@ input_data = torch.LongTensor(1, 128).random_(0, max_byte_size).to(torch.int32)
 torch.onnx.export(
     model,          # Model to export
     input_data,               # Sample input data
-    f"MalwareModelNew.onnx",   # File name to save the ONNX model
+    f"MalwareModelNewS.onnx",   # File name to save the ONNX model
     verbose=False,
     input_names=["input"],    # Names for the input tensors
     output_names=["output"],  # Names for the output tensors
