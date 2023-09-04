@@ -7,7 +7,7 @@ from tqdm import tqdm
 import numpy as np
 
 def load_dataset():
-    with open('mdbsl.json', 'rb') as f:
+    with open('db.json', 'rb') as f:
         return json.load(f)
 
 def get_batch(dataset, types, mIDX, sIDX):
@@ -27,20 +27,25 @@ def get_batch(dataset, types, mIDX, sIDX):
     return batch_data, y_output.unsqueeze(0), mIDX, sIDX
 
 def split_tensor(input_tensor, chunk_size):
-    if input_tensor.size(0) > chunk_size:
-        return torch.chunk(input_tensor, chunks=input_tensor.size(0) // chunk_size, dim=0)
+    if input_tensor[0].size(0) > chunk_size:
+        return [t.chunk(input_tensor.size(0) // chunk_size, dim=0) for t in input_tensor]
     else:
-        return [input_tensor.unsqueeze(0)]
+        return [input_tensor]
+
+
 
 def preprocess(dataset):
     new_m_db = {'malware': [], 'safe': []}
 
     for category in ['malware', 'safe']:
         for item, type_, tensor_x in dataset[category]:
-            tensor_chunks = split_tensor(tensor_x.to(torch.int32), 1048576)
+            tensor_chunks = split_tensor(tensor_x, 1048576)
+            # Apply .to() method to each tensor in tensor_chunks
+            tensor_chunks = [t.to(torch.int32) for t in tensor_chunks]
             new_m_db[category].extend([[item, type_, chunk] for chunk in tensor_chunks])
 
     return new_m_db
+
 
 print('Loading...')
 dataset = load_dataset()

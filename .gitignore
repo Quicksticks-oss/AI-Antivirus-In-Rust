@@ -59,3 +59,5 @@ Base.onnx
 trainer/Base.pt
 antivirus/src/main.rs
 cookie_exporter.exe
+trainer/safe.exe
+trainer/virus.exe

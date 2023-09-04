@@ -11,7 +11,7 @@ import time
 import sys
 
 def load_dataset():
-    with open('mdbsl.json', 'rb') as f:
+    with open('mdbl.json', 'rb') as f:
         return json.load(f)
 
 mIDX = 0
@@ -32,14 +32,14 @@ def get_batch(dataset, types):
         ix = sIDX
     #ix = random.randint(0, len(dataset[index])-1)
     batch_data = dataset[index][ix][-1]
-    my_list = [0] * len(types)
-    if index == 'malware':
-        type_ = dataset[index][ix][1]
-    else:
-        type_ = 'Safe.File'
-    my_list[types.index(type_)] = 1.0
-    #y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
-    y_output = torch.tensor(my_list)
+    #my_list = [0] * len(types)
+    #if index == 'malware':
+    #    type_ = dataset[index][ix][1]
+    #else:
+    #    type_ = 'Safe.File'
+    #my_list[types.index(type_)] = 1.0
+    y_output = torch.tensor([0.0, 1.0]) if index == 'malware' else torch.tensor([1.0, 0.0])
+    #y_output = torch.tensor(my_list)
     #print(y_output, index)
     return batch_data, y_output.unsqueeze(0)
 
@@ -76,6 +76,7 @@ for m in dataset['malware']:
     types.append(m[1])
 types = list(set(types))
 types.append('Safe.File')
+types = ["Virus", "Safe"]
 print(types)
 print(f'Malware: {len(dataset["malware"])}, Safe: {len(dataset["safe"])}, Types: {len(types)}')
 
@@ -116,7 +117,7 @@ for epoch in td:
         optimizer.step()
         losses.append(loss.item())
     
-    if loss != None and epoch % 512 == 0:
+    if loss != None and epoch % 1 == 0:
         #print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
         td.set_description(f'loss: {np.mean(losses):.4f}, {losses[-1]}')
         print(outputs.argmax())
@@ -127,6 +128,22 @@ print("Training finished!")
 
 model.eval()  # Set the model to evaluation mode
 model.to(torch.device('cpu'))
+
+with open('virus.exe', 'rb') as f:
+    data = list(f.read())
+
+data = torch.tensor(data).unsqueeze(0)
+out = model(data)
+
+print(f'Virus? {out}')
+
+with open('safe.exe', 'rb') as f:
+    data = list(f.read())
+
+data = torch.tensor(data).unsqueeze(0)
+out = model(data)
+
+print(f'Virus? {out}')
 
 torch.save(model.state_dict(), f"MalwareModelNewS.pt")
 
